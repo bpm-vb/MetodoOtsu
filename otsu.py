@@ -25,16 +25,16 @@ def otsu_threshold(gray: np.ndarray) -> tuple[int, float]:
       Per ogni soglia t in [0, 254] si dividono i pixel in due classi:
         C0 = {0..t},  C1 = {t+1..255}
       Si massimizza la varianza inter-classe:
-        sigma_b_sq(t) = ω0(t)·ω1(t)·[μ0(t) - μ1(t)]²
+        sigma_b_sq(t) = omega_0(t)·omega_1(t)·[mu_0(t) - mu_1(t)]²
       che è equivalente a:
-        sigma_b_sq(t) = [μ_T·ω0(t) - μ0_cum(t)]² / [ω0(t)·(1-ω0(t))]
+        sigma_b_sq(t) = [mu_T·omega_0(t) - mu_0_cum(t)]² / [omega_0(t)·(1-omega_0(t))]
 
     Returns
     -------
     threshold : int
-        Soglia ottimale (valore in [0,255]).
+        Soglia ottimale [0,255].
     sigma_max : float
-        Valore massimo della varianza inter-classe (utile per DP in futuro).
+        Valore massimo della varianza inter-classe.
     """
     hist = compute_histogram(gray, normalize=True)   # p(i)
     levels = np.arange(256, dtype=np.float64)
