@@ -17,7 +17,7 @@ def compute_histogram(gray: np.ndarray, normalize: bool = True) -> np.ndarray:
         hist /= hist.sum()          # probabilità p(i)
     return hist
 
-def otsu_threshold(gray: np.ndarray) -> tuple[int, float]:
+def otsu_threshold(gray: np.ndarray) -> int:
     """
     Calcola la soglia ottimale seguendo l'algoritmo di Otsu.
 
@@ -36,13 +36,13 @@ def otsu_threshold(gray: np.ndarray) -> tuple[int, float]:
     sigma_max : float
         Valore massimo della varianza inter-classe.
     """
-    hist = compute_histogram(gray, normalize=True)   # p(i)
+    hist = compute_histogram(gray, normalize=True)   # P(i)
     levels = np.arange(256, dtype=np.float64)
 
     # Calcolo dei valori cumulativi
-    omega = np.cumsum(hist)                          # P(C0) per le possibili soglie
-    mu_cum = np.cumsum(hist * levels)                # Media cumulativa per le possibili soglie
-    mu_T = mu_cum[-1]                                # Media globale
+    omega = np.cumsum(hist)                     # P(C0) per le possibili soglie
+    mu_cum = np.cumsum(hist * levels)           # Media cumulativa per le possibili soglie
+    mu_T = mu_cum[-1]                           # Media globale
 
     # Varianza inter-classe per tutte le possibili soglie in una sola riga vettorizzata
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -52,9 +52,7 @@ def otsu_threshold(gray: np.ndarray) -> tuple[int, float]:
             0.0
         )
 
-    threshold = int(np.argmax(sigma_b_sq))
-    sigma_max = float(sigma_b_sq[threshold])
-    return threshold, sigma_max
+    return int(np.argmax(sigma_b_sq))           # l'indice in int della soglia ottimale
 
 def class_contribution(a, b, omega, mu_cum, mu_T):
     """
@@ -83,8 +81,8 @@ def class_contribution(a, b, omega, mu_cum, mu_T):
         return 0.0
 
     mu_ab = mu_ab_cum / omega_ab
-    sigma_b_sq_ab = omega_ab * (mu_ab - mu_T)**2
-    return float(sigma_b_sq_ab)
+
+    return omega_ab * (mu_ab - mu_T)**2
 
 def otsu_threshold_dp(gray: np.ndarray, k: int) -> tuple[list[int], float]:
     
@@ -96,28 +94,28 @@ def otsu_threshold_dp(gray: np.ndarray, k: int) -> tuple[list[int], float]:
     mu_T = mu_cum[-1]                                # Media globale
 
     # Tabella con soglie e livelli
-    variance_table = np.zeros((k+1, 256))
-    thresholds = np.zeros((k+1, 256))
-    best_thresholds = []
+    variance_table = np.zeros((k+1, 256))   # max varianza tra classi usando i soglie fino al livello t
+    thresholds = np.zeros((k+1, 256))       # memorizza la soglia t_k che ha generato il massimo
 
     for t in range(256): # caso base in cui utilizzo 0 soglie
         variance_table[0][t] = class_contribution(0, t, omega, mu_cum, mu_T)
 
     for i in range(1, k+1): # utilizzo le soglie fino a k
         for t in range(i, 256): # itero sui livelli, da 0 a [i, 256], parto da i perché così posso calcolare le mie k=i soglie altrimenti non ci riuscirei avendo un array più piccolo
-            best = -np.inf
-            best_threshold = 0
+            t_prev_range = np.arange(i-1, t) # range di possibili soglie
 
-            for t_k in range(i-1, t): # possibile ultima soglia
-                if variance_table[i-1][t_k] == 0 and t_k != i-1:
-                    continue
-                curr = variance_table[i-1][t_k] + class_contribution(t_k+1, t, omega, mu_cum, mu_T)
-                if curr > best: 
-                    best = curr
-                    best_threshold = t_k
-            variance_table[i][t] = best
-            thresholds[i][t] = best_threshold
+            # Calcolo i contributi della classe per ogni soglie precedente
+            candidates = [
+                variance_table[i-1][t_k] + class_contribution(t_k+1, t, omega, mu_cum, mu_T)
+                for t_k in t_prev_range
+            ]
+            
+            if candidates:
+                best_idx = np.argmax(candidates)
+                variance_table[i][t] = candidates[best_idx]
+                thresholds[i][t] = t_prev_range[best_idx]
 
+    best_thresholds = []
     t = 255
     for i in range(k, 0, -1):
         t = int(thresholds[i][t])
@@ -245,7 +243,7 @@ def print_report(images: dict[str, np.ndarray], k: int = 2) -> None:
     print(f"{'Immagine':<28} {'t_otsu':>8} {'t_opencv':>9} {'soglie_dp':>20} {'σ²_B':>12}")
     print("-" * 75)
     for name, gray in images.items():
-        t_our, sigma_max = otsu_threshold(gray)
+        t_our = otsu_threshold(gray)
         t_cv, _ = otsu_opencv(gray)
         soglie, sigma_dp = otsu_threshold_dp(gray, k)
         soglie_str = str(soglie)
