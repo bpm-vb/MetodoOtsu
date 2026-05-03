@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+import time
 
 
 # ---------------------------------------------------------------------------
@@ -17,7 +18,7 @@ def compute_histogram(gray: np.ndarray, normalize: bool = True) -> np.ndarray:
         hist /= hist.sum()          # probabilità p(i)
     return hist
 
-def otsu_threshold(gray: np.ndarray) -> int:
+def otsu_threshold(gray: np.ndarray) -> tuple[int, float]:
     """
     Calcola la soglia ottimale seguendo l'algoritmo di Otsu.
 
@@ -52,7 +53,9 @@ def otsu_threshold(gray: np.ndarray) -> int:
             0.0
         )
 
-    return int(np.argmax(sigma_b_sq))           # l'indice in int della soglia ottimale
+    idx = np.argmax(sigma_b_sq)
+
+    return int(idx), float(sigma_b_sq[idx])     # l'indice in int della soglia ottimale
 
 def class_contribution(a, b, omega, mu_cum, mu_T):
     """
@@ -123,6 +126,53 @@ def otsu_threshold_dp(gray: np.ndarray, k: int) -> tuple[list[int], float]:
     best_thresholds.reverse()
 
     return best_thresholds, variance_table[k][255]
+
+def otsu_threshold_backtracking(gray: np.ndarray, k: int):
+    # inizializziamo le variabili per i valori cumulativi
+    hist = compute_histogram(gray, normalize=True)
+    levels = np.arange(256)
+    omega = np.zeros(257)
+    mu_cum = np.zeros(257)
+    omega[1:] = np.cumsum(hist)
+    mu_cum[1:] = np.cumsum(hist * levels)
+    mu_T = mu_cum[-1]
+
+    vbest = -1      # migliore varianza
+    tbest = []      # migliore configurazione (lista di soglie)
+    
+    memo_cost = {}  # dizionario per il contributo della classe [a,b]
+
+    def get_cost(a, b):     # class contribuition ottimizzata
+        if (a, b) in memo_cost:
+            return memo_cost[(a, b)]
+        omega_ab = omega[b + 1] - omega[a]
+        if omega_ab <= 0:
+            return 0.0
+        mu_ab = (mu_cum[b + 1] - mu_cum[a]) / omega_ab
+        sigma_b_sq_ab = omega_ab * (mu_ab - mu_T)**2
+        memo_cost[(a,b)] = sigma_b_sq_ab
+        return sigma_b_sq_ab
+    
+    def backtrack(start_level, k, vcurr, tcurr):
+        nonlocal vbest, tbest
+
+        if k == 0:  # caso base con 0 soglie da piazzare
+            variance = vcurr + get_cost(start_level, 255)
+            if variance > vbest:
+                vbest = variance
+                tbest = list(tcurr)
+            return
+        
+        # piazziamo la prossima soglia
+        for s in range(start_level, 255 - k):
+            variance_step = get_cost(start_level, s)
+            tcurr.append(s)
+            backtrack(s + 1, k - 1, vcurr + variance_step, tcurr)
+            tcurr.pop()
+    
+    backtrack(0, k, 0.0, [])
+
+    return tbest, vbest
 
 def apply_threshold(gray: np.ndarray, t: int) -> np.ndarray:
     """Binarizza l'immagine con soglia t (pixel > t → 255, altrimenti 0)."""
@@ -239,23 +289,25 @@ def plot_results(images: dict[str, np.ndarray], k: int = 2) -> None:
 # ---------------------------------------------------------------------------
 
 def print_report(images: dict[str, np.ndarray], k: int = 2) -> None:
+    start = time.perf_counter()
     print("\n" + "=" * 75)
-    print(f"{'Immagine':<28} {'t_otsu':>8} {'t_opencv':>9} {'soglie_dp':>20} {'σ²_B':>12}")
+    print(f"{'Immagine':<28} {'t_otsu':>8} {'t_opencv':>9} {'soglie_dp':>20} {'sigma_b_sq':>12}")
     print("-" * 75)
     for name, gray in images.items():
-        t_our = otsu_threshold(gray)
+        t_our, _ = otsu_threshold(gray)
         t_cv, _ = otsu_opencv(gray)
         soglie, sigma_dp = otsu_threshold_dp(gray, k)
         soglie_str = str(soglie)
         print(f"{name:<28} {t_our:>8d} {t_cv:>9d} {soglie_str:>20} {sigma_dp:>12.2f}")
     print("=" * 75)
     print(f"\nDP con k={k} soglie → {k+1} classi")
-    print("Nota: con k=1 la soglia DP deve coincidere con t_otsu.\n")
+    end = time.perf_counter()
+    print(f"Tempo totale di esecuzione: {end - start:.4f} secondi")
 
 if __name__ == "__main__":
     print("Caricamento immagini...")
     images = load_sample_images()
     print(f"  → {len(images)} immagini caricate: {list(images.keys())}\n")
-
+    
     print_report(images, 5)
     plot_results(images, 5)
