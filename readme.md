@@ -1,7 +1,6 @@
 # Metodo Otsu
 
-Analisi: Teoria
-Topic: Tesi triennale (https://www.notion.so/Tesi-triennale-3416cfe5a38780ac81a4e5e262024abc?pvs=21)
+Riferimenti principali (https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4310076)
 
 # Estratto del Paper originale
 
