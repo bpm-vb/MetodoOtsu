@@ -179,13 +179,13 @@ def otsu_threshold_dp(gray: np.ndarray, k: int) -> tuple[list[int], float]:
     mu_T = mu_cum[-1]                                # Media globale
 
     # Tabella con soglie e livelli
-    variance_table = np.zeros((k+1, 256))   # max varianza tra classi usando i soglie fino al livello t
-    thresholds = np.zeros((k+1, 256))       # memorizza la soglia t_k che ha generato il massimo
+    variance_table = np.zeros((k, 256))   # max varianza tra classi usando i soglie fino al livello t
+    thresholds = np.zeros((k, 256))       # memorizza la soglia t_k che ha generato il massimo
 
     for t in range(256): # caso base in cui utilizzo 0 soglie
         variance_table[0][t] = class_contribution(0, t, omega, mu_cum, mu_T)
 
-    for i in range(1, k+1): # utilizzo le soglie fino a k
+    for i in range(1, k): # utilizzo le soglie fino a k
         for t in range(i, 256): # itero sui livelli, da 0 a [i, 256], parto da i perché così posso calcolare le mie k=i soglie altrimenti non ci riuscirei avendo un array più piccolo
             t_prev_range = np.arange(i-1, t) # range di possibili soglie
 
@@ -202,12 +202,12 @@ def otsu_threshold_dp(gray: np.ndarray, k: int) -> tuple[list[int], float]:
 
     best_thresholds = []
     t = 255
-    for i in range(k, 0, -1):
+    for i in range(k-1, 0, -1):
         t = int(thresholds[i][t])
         best_thresholds.append(t)
     best_thresholds.reverse()
 
-    return best_thresholds, variance_table[k][255]
+    return best_thresholds, variance_table[k-1][255]
 ```
 
 Come nel caso semplice vado a calcolare i dati cumulativi dell’immagine. Poi inizializzo una *variance_table* e un array parallelo *thresholds* che mi servono per mantenere la massima varianza tra le classi utilizzando un numeri *i* di soglie fino al livello *t* e il loro indice (quindi la soglia ottimale *t_k*).
