@@ -122,6 +122,8 @@ Infine ritorniamo l’indice in *int* della massima varianza tra tutte quelle ca
 
 ## Multithresholding con DP (k>1)
 
+Implementazione basato sull'approccio dettato da Ping-Sung Liao, Tsu-Sheng Chen e Pau-Choo Chung nel paper *A Fast Algorithm for Multilevel Thresholding (2008)*.
+
 L’evoluzione naturale del metodo Otsu è quella di suddividere l’immagine in più classi tramite la ricerca di un numero maggiore di soglie. Ad esempio con t=2 avrei 3 classi:
 
 - $C_0$ contiene i livelli da $[1,\dots,t_1]$;
