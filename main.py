@@ -28,7 +28,7 @@ def compute_otsu(image: any, classes: int):
     regions = np.digitize(image, bins=thresholds)
     regions_my = np.digitize(image, bins=thresholds_my)
 
-    fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(20, 3.5))
+    fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(18, 3.5))
 
     ax[0].imshow(image, cmap='gray')
     ax[0].set_title('Original')
@@ -58,4 +58,4 @@ def compute_otsu(image: any, classes: int):
 
 if __name__=="__main__":
     image = data.camera()
-    compute_otsu(image, 3)
+    compute_otsu(image, 5)
