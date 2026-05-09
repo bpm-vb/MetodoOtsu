@@ -1,6 +1,8 @@
 # Metodo Otsu
 
-Riferimenti principali (https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4310076)
+Riferimenti principali:
+- A Threshold Selection Method for Gray-Level Histograms (M. Otsu - 1979) https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4310076
+- A Fast Algorithm for Multilevel Thresholding (Ping-Sung Liao, Tsu-Sheng Chen, Pau-Choo Chung - 2001) http://smile.ee.ncku.edu.tw/old/Links/MTable/ResearchPaper/papers/2001/A%20fast%20algorithm%20for%20multilevel%20%20thresholding.pdf
 
 # Estratto del Paper originale
 
@@ -122,7 +124,7 @@ Infine ritorniamo l’indice in *int* della massima varianza tra tutte quelle ca
 
 ## Multithresholding con DP (k>1)
 
-Implementazione basato sull'approccio dettato da Ping-Sung Liao, Tsu-Sheng Chen e Pau-Choo Chung nel paper *A Fast Algorithm for Multilevel Thresholding (2008)*.
+Implementazione basato sull'approccio dettato da Ping-Sung Liao, Tsu-Sheng Chen e Pau-Choo Chung nel paper *A Fast Algorithm for Multilevel Thresholding (2001)*.
 
 L’evoluzione naturale del metodo Otsu è quella di suddividere l’immagine in più classi tramite la ricerca di un numero maggiore di soglie. Ad esempio con t=2 avrei 3 classi:
 
