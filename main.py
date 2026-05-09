@@ -58,4 +58,4 @@ def compute_otsu(image: any, classes: int):
 
 if __name__=="__main__":
     image = data.camera()
-    compute_otsu(image, 5)
+    compute_otsu(image, 6)
