@@ -3,7 +3,7 @@
 Multi-Otsu Thresholding
 =======================
 
-Confrontiamo l'algoritmo di Scikit con quello proposto
+Confrontiamo la correttezza tra l'algoritmo di Scikit e quello proposto
 """
 
 import matplotlib

@@ -16,7 +16,7 @@ def compute_histogram(gray: np.ndarray, normalize: bool = True) -> np.ndarray:
 
 def otsu_threshold(gray: np.ndarray) -> tuple[int, float]:
     """
-    Calcola la soglia ottimale seguendo l'algoritmo di Otsu.
+    Calcola la soglia ottimale seguendo l'algoritmo di Otsu (1979).
 
     Idea:
       Per ogni soglia t in [0, 254] si dividono i pixel in due classi:
@@ -84,7 +84,11 @@ def class_contribution(a, b, omega, mu_cum, mu_T):
     return omega_ab * (mu_ab - mu_T)**2
 
 def otsu_threshold_dp(gray: np.ndarray, k: int) -> tuple[list[int], float]:
-    
+    """
+    Calcola le soglie ottimali seguendo l'approccio di 
+    Mohamed H. Merzban e Mahmoud Elbayoumi (2019)
+    """
+
     # Istogramma e cumulativi
     hist = compute_histogram(gray, normalize=True)   # p(i)
     levels = np.arange(256, dtype=np.float64)
@@ -169,9 +173,3 @@ def otsu_threshold_backtracking(gray: np.ndarray, k: int):
     backtrack(0, k, 0.0, [])
 
     return tbest, vbest
-    print("Caricamento immagini...")
-    images = load_sample_images()
-    print(f"  → {len(images)} immagini caricate: {list(images.keys())}\n")
-    
-    print_report(images, 5)
-    plot_results(images, 5)

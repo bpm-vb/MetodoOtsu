@@ -1,3 +1,7 @@
+"""
+Benchmark con pyperf su una singola immagine
+"""
+
 import pyperf
 from skimage import data
 from skimage.filters import threshold_multiotsu
