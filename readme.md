@@ -22,7 +22,7 @@ e l'implementazione di riferimento di **scikit-image**, sul dataset Mirflickr-25
 
 ## Requisiti
 
-- Python 3.10+
+- Python 3.10+ con le dipendenze indicate in `requirements.txt`
 - Il dataset Mirflickr-25K (vedi sotto)
 
 ---
