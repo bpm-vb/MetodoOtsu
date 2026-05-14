@@ -1,3 +1,25 @@
-__pycache__/
-mirflickr_25k/
 !.gitignore
+
+# Ambiente virtuale
+.venv/
+venv/
+env/
+ 
+# Dataset (troppo grande per git)
+mirflickr_25k/
+ 
+# Output del benchmark
+*.npz
+*.csv
+ 
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+ 
+# IDE
+.vscode/
+.idea/
+
+# altro
+appunti.md
