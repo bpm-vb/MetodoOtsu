@@ -6,14 +6,14 @@ Multi-Otsu Thresholding
 Confrontiamo la correttezza tra l'algoritmo di Scikit e quello proposto
 """
 
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import time
-    from otsu import otsu_threshold_dp
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import time
+from otsu import otsu_threshold_dp
 
-    from skimage import data
-    from skimage.filters import threshold_multiotsu
+from skimage import data
+from skimage.filters import threshold_multiotsu
 
 matplotlib.rcParams['font.size'] = 9
 
