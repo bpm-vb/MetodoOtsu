@@ -21,8 +21,8 @@ from datetime import datetime
 
 SEED        = 42
 WARMUP_IMGS = 3      # immagini di warm-up escluse dalle statistiche
-REPEATS     = 3      # ripetizioni per immagine (si prende la mediana)
-ATOL        = 1      # tolleranza assoluta per confronto soglie (livelli di grigio)
+REPEATS     = 3      # ripetizioni per immagine (si prende il minimo)
+ATOL        = 1      # tolleranza assoluta per confronto soglie
 
 
 # ──────────────────────────────────────────────
@@ -32,7 +32,7 @@ ATOL        = 1      # tolleranza assoluta per confronto soglie (livelli di grig
 def measure(fn, img, repeats=REPEATS):
     """
     Esegue `fn(img)` per `repeats` volte e restituisce
-    (mediana dei tempi, risultato dell'ultima chiamata).
+    (minor tempo, risultato dell'ultima chiamata).
     """
     times  = []
     result = None
@@ -40,7 +40,7 @@ def measure(fn, img, repeats=REPEATS):
         t0 = time.perf_counter()
         result = fn(img)
         times.append(time.perf_counter() - t0)
-    return float(np.median(times)), result
+    return float(np.min(times)), result
 
 
 def run_pair(img, classes, rng):
@@ -113,37 +113,38 @@ def check_correctness(record, img_name):
 # Benchmark principale
 # ──────────────────────────────────────────────
 
-def benchmark_otsu(dataset_dir, classes=3, dataset_dim=25000):
-    rng  = random.Random(SEED)
+def benchmark_otsu(dataset_dir, classes=3, dataset_dim=25000, n_rounds=5):
+    rng = random.Random(SEED)
     path = Path(dataset_dir)
 
     all_files = list(path.glob("*.jpg"))
     rng.shuffle(all_files)
-    img_files = all_files[:dataset_dim + WARMUP_IMGS]
+    all_files = all_files[:dataset_dim + WARMUP_IMGS]
 
-    warmup(img_files, classes, n=WARMUP_IMGS)
-
-    benchmark_files = img_files[WARMUP_IMGS:]
-    total = len(benchmark_files)
+    warmup(all_files, classes, n=WARMUP_IMGS)
+    pool = all_files[WARMUP_IMGS:]
 
     times = {"prop": [], "skimage": []}
 
-    for i, img_path in enumerate(benchmark_files, 1):
-        img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            print(f"  Impossibile leggere {img_path.name}, saltata.")
-            continue
+    for round_idx in range(1, n_rounds + 1):
+        print(f"\n── Round {round_idx}/{n_rounds} ──")
 
-        print(f"[{i:>5}/{total}] {img_path.name}")
-        record = run_pair(img, classes, rng)
+        batch = rng.sample(pool, k=min(dataset_dim, len(pool)))
 
-        if record is None:
-            continue
+        for i, img_path in enumerate(batch, 1):
+            img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
+            if img is None:
+                continue
 
-        check_correctness(record, img_path.name)
+            print(f"  [{i:>5}/{len(batch)}] {img_path.name}")
+            record = run_pair(img, classes, rng)
 
-        times["prop"].append(record["prop"]["time"])
-        times["skimage"].append(record["skimage"]["time"])
+            if record is None:
+                continue
+
+            check_correctness(record, img_path.name)
+            times["prop"].append(record["prop"]["time"])
+            times["skimage"].append(record["skimage"]["time"])
 
     return {k: np.array(v) for k, v in times.items()}
 
@@ -237,13 +238,14 @@ def save_results_csv(results, classes, dataset_dim, path="results_otsu.csv"):
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    CLASSES = 3
-    DATASET_DIM = 50
+    CLASSES = 5
+    DATASET_DIM = 5
 
     results = benchmark_otsu(
         dataset_dir = "mirflickr_25k/mirflickr",
         classes = CLASSES,
         dataset_dim = DATASET_DIM,
+        n_rounds=3
     )
 
     print("\n")
