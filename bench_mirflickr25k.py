@@ -45,8 +45,7 @@ def measure(fn, img, repeats=REPEATS):
 
 def run_pair(img, classes, rng):
     """
-    Esegue entrambi gli algoritmi su una singola immagine in ordine casuale
-    per evitare vantaggi sistematici da cache.
+    Esegue entrambi gli algoritmi su una singola immagine in ordine casuale.
 
     Restituisce un dict con tempi, soglie e flag di validità,
     oppure None se uno dei due algoritmi fallisce.
@@ -66,7 +65,7 @@ def run_pair(img, classes, rng):
                 "thresholds": np.sort(np.asarray(thresholds, dtype=np.float64))
             }
         except Exception as e:
-            print(f"    ⚠  Errore [{name}]: {e}")
+            print(f"    Errore [{name}]: {e}")
             return None
 
     return record
@@ -78,8 +77,7 @@ def run_pair(img, classes, rng):
 
 def warmup(img_files, classes, n=WARMUP_IMGS):
     """
-    Esegue entrambi gli algoritmi su `n` immagini senza registrare i tempi,
-    per stabilizzare JIT, import e cache OS prima del benchmark reale.
+    Esegue entrambi gli algoritmi su `n` immagini senza registrare i tempi.
     """
     print(f"[Warm-up] {n} immagini escluse dalle statistiche...")
     for img_path in img_files[:n]:
@@ -106,7 +104,7 @@ def check_correctness(record, img_name):
     t_prop = np.sort(np.asarray(record["prop"]["thresholds"], dtype=np.float64))
     t_sk   = np.sort(np.asarray(record["skimage"]["thresholds"], dtype=np.float64))
     if not np.allclose(t_prop, t_sk, atol=ATOL):
-        print(f"    ⚠  Soglie divergenti su {img_name}: prop={t_prop} | skimage={t_sk}")
+        print(f"    Soglie divergenti su {img_name}: prop={t_prop} | skimage={t_sk}")
 
 
 # ──────────────────────────────────────────────
@@ -173,19 +171,9 @@ def analyze(results):
     print_stats("Skimage Otsu",  sk)
     print("=" * 45)
 
-    # Speedup
     speedup = np.median(sk) / np.median(prop)
     faster  = "proposto" if speedup >= 1 else "skimage"
     print(f"\n  Speedup mediano ({faster} più veloce): {abs(speedup):.2f}×")
-
-    # Test di significatività (Wilcoxon signed-rank, paired, non-parametrico)
-    if len(prop) >= 10:
-        stat, p = stats.wilcoxon(prop, sk, alternative="two-sided")
-        sig     = "OK differenza statisticamente significativa (p < 0.05)" if p < 0.05 \
-                  else "! differenza NON significativa (p ≥ 0.05)"
-        print(f"  Wilcoxon p-value: {p:.4e}  →  {sig}")
-    else:
-        print("  (campione troppo piccolo per il test di Wilcoxon)")
 
     print("=" * 45)
 
@@ -197,7 +185,6 @@ def analyze(results):
 def save_results(results, path="results_otsu.npz"):
     np.savez(path, prop=results["prop"], skimage=results["skimage"])
     print(f"\n  Risultati raw salvati in '{path}'")
-    print(f"  Per ricaricarli: data = np.load('{path}')")
 
 def save_results_csv(results, classes, dataset_dim, path="results_otsu.csv"):
     prop = results["prop"]
@@ -234,18 +221,19 @@ def save_results_csv(results, classes, dataset_dim, path="results_otsu.csv"):
 
 
 # ──────────────────────────────────────────────
-# Entry point
+# MAIN
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    CLASSES = 5
-    DATASET_DIM = 5
+    CLASSES = 3
+    DATASET_DIM = 50
+    N_ROUNDS = 3
 
     results = benchmark_otsu(
         dataset_dir = "mirflickr_25k/mirflickr",
         classes = CLASSES,
         dataset_dim = DATASET_DIM,
-        n_rounds=3
+        n_rounds=N_ROUNDS
     )
 
     print("\n")

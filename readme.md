@@ -53,7 +53,7 @@ pip install -r requirements.txt
 
 Il dataset **Mirflickr-25K** non è incluso nel repository per via delle dimensioni.
 
-1. Scaricalo da [https://press.liacs.nl/mirflickr/](https://press.liacs.nl/mirflickr/)
+1. Può essere scaricato da [https://press.liacs.nl/mirflickr/](https://press.liacs.nl/mirflickr/)
 2. Estrai l'archivio nella cartella del progetto in modo che il path risultante sia:
    ```
    mirflickr_25k/mirflickr/*.jpg
@@ -76,11 +76,12 @@ I parametri principali si trovano in cima a `bench_mirflickr25k.py`:
 | `REPEATS`     | `3`     | Ripetizioni per immagine (si usa la mediana)     |
 | `ATOL`        | `1`     | Tolleranza per il confronto delle soglie         |
 
-Per modificare il numero di classi o la dimensione del dataset, recarsi nel main:
+Per modificare il numero di classi, la dimensione del dataset o il numero di round, recarsi nel main:
 
 ```python
 CLASSES = 3
 DATASET_DIM = 50
+N_ROUNDS = 3
 ```
 
 ---
